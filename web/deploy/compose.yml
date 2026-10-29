@@ -1,0 +1,37 @@
+# Lives on the server at /srv/timecard/compose.yml. CI never copies it: after a change, copy it
+# there by hand and run `docker compose up -d`
+name: timecard
+
+services:
+  # the one app — deployed from every push to main
+  timecard:
+    image: ghcr.io/skoop-ksm/timecard:prod
+    restart: unless-stopped
+    env_file: .env.prod
+    volumes:
+      - ./data:/data
+    networks:
+      - tunnel
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+    # the whole app is a few MB of JS and a JSON file; this is still generous
+    mem_limit: 128m
+    pids_limit: 64
+    # the server finishes in-flight writes on SIGTERM; well under this
+    stop_grace_period: 15s
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+
+# redbird's compose network, so redbird's cloudflared reaches this service at http://timecard:8787
+networks:
+  tunnel:
+    external: true
+    name: redbird_default

@@ -48,38 +48,55 @@ Then open <http://127.0.0.1:8787>. Environment variables:
 
 Tests: `node test/run.js`. Regenerate the PNG icons: `node scripts/make-icons.js`.
 
-## Host it on Debian behind a Cloudflare Tunnel
+## Deploy
 
-The app has no login of its own. Put it behind **Cloudflare Access** so the
-public hostname asks for your email one-time code before anything reaches
-the server. Access is free for a handful of users.
+Same pattern as aracari: every push to `main` that touches `web/` runs the
+tests, builds `ghcr.io/skoop-ksm/timecard:prod` on GitHub's runners, and a
+self-hosted runner on the home server pulls and restarts it, waits for the
+container to be healthy, and rolls back to the previous image if it is not
+(`.github/workflows/deploy.yml`).
 
-1. **Run the app** on the server, either way:
-   - Docker: `docker compose up -d --build` (binds to `127.0.0.1:8787`, data
-     in `./data`).
-   - systemd: copy the app to `/opt/timecard`, create a `timecard` user and
-     `/var/lib/timecard`, install `deploy/timecard.service`, then
-     `systemctl enable --now timecard`.
-2. **Tunnel**: `cloudflared tunnel create timecard`, route a hostname to it,
-   and point the ingress at `http://127.0.0.1:8787`
-   (see `deploy/cloudflared-config.example.yml`). Run `cloudflared` as a
-   service.
-3. **Access**: in Zero Trust → Access → Applications, add a self-hosted app
-   for that hostname with a policy allowing your email. Set a long session
-   duration so your phone does not keep asking.
-4. **Install on the phone**: open the hostname in Safari or Chrome and use
-   "Add to Home Screen". It launches full-screen with its own icon.
+The container joins redbird's compose network, so redbird's `cloudflared`
+reaches it at `http://timecard:8787`. No host ports are published.
+
+### One-time server setup
+
+1. **Runner**: register a self-hosted runner against this repo with the label
+   `timecard`, the way redbird's `server-bootstrap.sh` did for redbird
+   (Settings → Actions → Runners → New self-hosted runner). Runners are per
+   repo on a personal account.
+2. **Files**:
+   ```bash
+   sudo mkdir -p /srv/timecard/data
+   sudo cp deploy/compose.yml /srv/timecard/compose.yml
+   sudo cp deploy/env.prod.example /srv/timecard/.env.prod   # then set TIMECARD_TOKEN
+   sudo chown -R $USER:docker /srv/timecard && sudo chown 1000:1000 /srv/timecard/data
+   sudo chmod 750 /srv/timecard && sudo chmod 640 /srv/timecard/.env.prod
+   ```
+3. **Tunnel hostname**: Zero Trust → Networks → Tunnels → redbird → Public
+   hostnames → add `timecard.redbird.party` → `http://timecard:8787`.
+4. **Access**: Zero Trust → Access → Applications → self-hosted app for that
+   hostname, policy allowing your email, long session. The app has no login of
+   its own, so this is the front door. Add a bypass or service-token policy for
+   the path `/api/punch` if you want Shortcuts to punch without a browser.
+5. **Backup**: copy `deploy/timecard-backup.sh` to `/usr/local/bin` and add it
+   to root's crontab after aracari's. It copies the one JSON file and keeps
+   30 days.
+6. Push to `main` (or re-run the workflow). The first deploy creates the
+   container.
+
+### Install on the phone
+
+Open the hostname in Safari or Chrome and use "Add to Home Screen". It
+launches full-screen with its own icon.
 
 ### Punching from Shortcuts, Siri, or scripts
 
 `POST /api/punch` toggles (or takes `{"action":"in"}` / `{"action":"out"}`)
-and rounds on the server's clock. Set `TIMECARD_TOKEN` and send it as a
-bearer token. Because Cloudflare Access would block a non-interactive
-request, add an Access **bypass** policy for the path `/api/punch` or use a
-**service token**; the bearer token then protects that one endpoint.
+and rounds on the server's clock. Send the `TIMECARD_TOKEN` as a bearer token:
 
 ```bash
-curl -X POST https://timecard.example.com/api/punch \
+curl -X POST https://timecard.redbird.party/api/punch \
   -H "Authorization: Bearer $TIMECARD_TOKEN" -H "Content-Type: application/json" \
   -d '{"action":"toggle"}'
 ```
@@ -87,10 +104,11 @@ curl -X POST https://timecard.example.com/api/punch \
 An iOS Shortcut with a "Get Contents of URL" action doing the same can be
 named "Punch in" and triggered with Siri.
 
-### Backups
+### Backups and restore
 
-Everything is in `timecard.json` in `DATA_DIR`. Copy it, or download it from
-Settings → Download backup. Restoring is putting the file back and restarting.
+Everything is in `/srv/timecard/data/timecard.json`, also downloadable from
+Settings → Download backup. Restoring is putting the file back and running
+`docker compose restart timecard`.
 
 ## API
 
@@ -115,5 +133,5 @@ lib/store.js       JSON file store with validation
 shared/time.js     rounding, pay periods, formatting (used by server and browser)
 public/            the app: index.html, app.js, style.css, service worker, icons
 test/run.js        tests (node test/run.js)
-deploy/            systemd unit and cloudflared example
+deploy/            server compose file, env example, backup script
 ```
