@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "timecard-web",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["web/server.js"],
+      "port": 8787
+    }
+  ]
+}

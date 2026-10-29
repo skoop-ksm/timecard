@@ -1,0 +1,16 @@
+{
+  "name": "Timecard",
+  "short_name": "Timecard",
+  "description": "Simple punch clock: record when you start and stop work, see hours and pay per period.",
+  "start_url": "/#/clock",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f6f7f8",
+  "theme_color": "#2a9d5c",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

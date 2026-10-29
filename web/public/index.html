@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Timecard</title>
+<meta name="description" content="Simple punch clock: record when you start and stop work, see hours and pay per period.">
+<meta name="theme-color" content="#f6f7f8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#121416" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Timecard">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icon-180.png">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="#/clock" aria-label="Timecard, go to clock">
+    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M12 7v5.2l3.4 2" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+    <span>Timecard</span>
+  </a>
+  <nav class="tabs tabs-top" aria-label="Primary"></nav>
+</header>
+
+<main id="view" aria-live="polite"></main>
+
+<nav class="tabs tabs-bottom" aria-label="Primary"></nav>
+
+<dialog id="editor" aria-labelledby="editor-title">
+  <form id="editor-form" method="dialog" novalidate>
+    <h2 id="editor-title">Edit entry</h2>
+
+    <label class="field">
+      <span>Date</span>
+      <input type="date" name="date" required>
+    </label>
+
+    <div class="field time-field">
+      <span>Start</span>
+      <div class="time-row">
+        <button type="button" class="nudge" data-nudge="start" data-dir="-1" aria-label="Earlier start">−</button>
+        <input type="time" name="start" required>
+        <button type="button" class="nudge" data-nudge="start" data-dir="1" aria-label="Later start">+</button>
+      </div>
+    </div>
+
+    <div class="field time-field" id="stop-field">
+      <span>Stop</span>
+      <div class="time-row">
+        <button type="button" class="nudge" data-nudge="stop" data-dir="-1" aria-label="Earlier stop">−</button>
+        <input type="time" name="stop">
+        <button type="button" class="nudge" data-nudge="stop" data-dir="1" aria-label="Later stop">+</button>
+      </div>
+      <label class="check"><input type="checkbox" name="running"> <span>Still running</span></label>
+    </div>
+
+    <p class="editor-summary" id="editor-summary"></p>
+    <p class="editor-error" id="editor-error" role="alert"></p>
+
+    <footer class="editor-actions">
+      <button type="button" class="btn danger-text" id="editor-delete">Delete</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn" id="editor-cancel">Cancel</button>
+      <button type="submit" class="btn primary" id="editor-save">Save</button>
+    </footer>
+  </form>
+</dialog>
+
+<div id="toast" class="toast" role="status" hidden>
+  <span class="toast-text"></span>
+  <button type="button" class="toast-action" hidden></button>
+</div>
+
+<script type="module" src="/app.js"></script>
+</body>
+</html>

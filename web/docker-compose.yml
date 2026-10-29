@@ -1,0 +1,11 @@
+services:
+  timecard:
+    build: .
+    container_name: timecard
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8787:8787"   # only reachable from this host; cloudflared connects locally
+    volumes:
+      - ./data:/data
+    environment:
+      TIMECARD_TOKEN: ""        # set a long random string to protect POST /api/punch

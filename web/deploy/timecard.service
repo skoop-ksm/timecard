@@ -1,0 +1,28 @@
+# systemd unit for running Timecard without Docker.
+#   sudo cp deploy/timecard.service /etc/systemd/system/
+#   sudo systemctl enable --now timecard
+# Needs Node 18 or newer at /usr/bin/node and the app at /opt/timecard.
+[Unit]
+Description=Timecard web punch clock
+After=network.target
+
+[Service]
+Type=simple
+User=timecard
+Group=timecard
+WorkingDirectory=/opt/timecard
+Environment=PORT=8787
+Environment=HOST=127.0.0.1
+Environment=DATA_DIR=/var/lib/timecard
+# Environment=TIMECARD_TOKEN=change-me
+ExecStart=/usr/bin/node /opt/timecard/server.js
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/timecard
+
+[Install]
+WantedBy=multi-user.target

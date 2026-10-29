@@ -1,0 +1,9 @@
+# ~/.cloudflared/config.yml on the Debian box (example).
+# After `cloudflared tunnel create timecard` and a DNS route for the hostname.
+tunnel: <tunnel-id>
+credentials-file: /home/<you>/.cloudflared/<tunnel-id>.json
+
+ingress:
+  - hostname: timecard.example.com
+    service: http://127.0.0.1:8787
+  - service: http_status:404
